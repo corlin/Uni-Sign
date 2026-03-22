@@ -41,13 +41,10 @@ If our project helps you, please give us a star🌟 on GitHub, that would motiva
 
 
 ## 🛠️ Installation
-We suggest to create a new conda environment. 
+We suggest using [uv](https://github.com/astral-sh/uv) to manage the environment.
 ```bash
-# create environment
-conda create --name Uni-Sign python=3.9
-conda activate Uni-Sign
-# install other relevant dependencies
-pip install -r requirements.txt
+# Install dependencies and create environment
+uv sync
 # (Optional) If you want to evaluate BLEURT scores on the How2Sign or OpenASL datasets
 git clone https://github.com/google-research/bleurt.git
 cd bleurt
@@ -66,7 +63,7 @@ The Uni-Sign checkpoints are available for download [Here](https://huggingface.c
 ## 🔨 Training & Evaluation
 All scripts must be executed within the Uni-Sign directory. 
 
-For the pre-training code, please refer to [Issue #15](https://github.com/ZechengLi19/Uni-Sign/issues/15) for detailed instructions. Thanks to [@williams-bert](https://github.com/williams-bert) for generously sharing the [code implementation](https://github.com/williams-bert/Uni-Sign/blob/main/pre_training.py).
+For the pre-training code, please refer to [Issue #15](https://github.com/corlin/Uni-Sign/issues/15) for detailed instructions. Thanks to [@williams-bert](https://github.com/williams-bert) for generously sharing the [code implementation](https://github.com/williams-bert/Uni-Sign/blob/main/pre_training.py).
 ### Training
 **Stage 1**: pose-only pre-training.
 ```bash
