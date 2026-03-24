@@ -2,8 +2,9 @@
 import os
 import subprocess
 import argparse
+import zipfile
 
-def download_files(output_directory, download_pose):
+def download_files(output_directory, download_pose, skip_rgb=False, num_archives=None):
     RGB_zip_folder = os.path.join(output_directory, "RGB_download")
     video_folder = os.path.join(output_directory, "rgb_format")
     os.makedirs(RGB_zip_folder, exist_ok=True)
@@ -12,24 +13,33 @@ def download_files(output_directory, download_pose):
     RGB_error_log_path = os.path.join(RGB_zip_folder, "download_log.txt")
     
     # Download RGB format
-    for i in range(1, 437):
-        url = f"https://huggingface.co/datasets/ZechengLi19/CSL-News/resolve/main/archive_{i:03d}.zip"
-        file_path = os.path.join(RGB_zip_folder, f"archive_{i}.zip")
-        if os.path.exists(file_path):
-            print(f"file {file_path} exits.")
-            continue
+    if not skip_rgb:
+        max_rgb = num_archives if num_archives is not None else 436
+        for i in range(1, max_rgb + 1):
+            url = f"https://huggingface.co/datasets/ZechengLi19/CSL-News/resolve/main/archive_{i:03d}.zip"
+            file_path = os.path.join(RGB_zip_folder, f"archive_{i}.zip")
+            if os.path.exists(file_path):
+                print(f"file {file_path} exits.")
+                continue
 
-        command = ["wget", "-O", file_path, url]
-        unzip_command = ["unzip", "-j", file_path, "-d", video_folder]
-        try:
-            subprocess.run(command, check=True)
-            print(f"file {url} saved to {file_path}")
-            subprocess.run(unzip_command, check=True)
-        except subprocess.CalledProcessError as e:
-            error_message = f"file {url} download failed: {e}\n"
-            print(error_message)
-            with open(RGB_error_log_path, "a") as error_log_file:
-                error_log_file.write(error_message)
+            command = ["wget", "-O", file_path, url]
+            unzip_command = ["unzip", "-j", file_path, "-d", video_folder]
+            try:
+                subprocess.run(command, check=True)
+                print(f"file {url} saved to {file_path}")
+                # subprocess.run(unzip_command, check=True)
+                with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                    for member in zip_ref.infolist():
+                        if not member.is_dir():
+                            member.filename = os.path.basename(member.filename)
+                            zip_ref.extract(member, video_folder)
+            except subprocess.CalledProcessError as e:
+                error_message = f"file {url} download failed: {e}\n"
+                print(error_message)
+                with open(RGB_error_log_path, "a") as error_log_file:
+                    error_log_file.write(error_message)
+    else:
+        print("Skipping RGB download as requested.")
     
     # Download pose format (Optional)
     if download_pose:
@@ -40,7 +50,8 @@ def download_files(output_directory, download_pose):
 
         pose_error_log_path = os.path.join(pose_zip_folder, "download_log.txt")
         
-        for i in range(1, 47):
+        max_pose = num_archives if num_archives is not None else 46
+        for i in range(1, max_pose + 1):
             url = f"https://huggingface.co/datasets/ZechengLi19/CSL-News_pose/resolve/main/archive_{i:03d}.zip"
             file_path = os.path.join(pose_zip_folder, f"archive_{i}.zip")
             if os.path.exists(file_path):
@@ -52,7 +63,12 @@ def download_files(output_directory, download_pose):
             try:
                 subprocess.run(command, check=True)
                 print(f"file {url} saved to {file_path}")
-                subprocess.run(unzip_command, check=True)
+                # subprocess.run(unzip_command, check=True)
+                with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                    for member in zip_ref.infolist():
+                        if not member.is_dir():
+                            member.filename = os.path.basename(member.filename)
+                            zip_ref.extract(member, video_folder)
             except subprocess.CalledProcessError as e:
                 error_message = f"file {url} download failed: {e}\n"
                 print(error_message)
@@ -79,5 +95,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some parameters.')
     parser.add_argument('--output_directory', type=str, help='Path to the dataset directory', default="/path/to/dataset")
     parser.add_argument('--download_pose', action='store_true', help='Whether to download pose or not')
+    parser.add_argument('--skip_rgb', action='store_true', help='Whether to skip RGB download or not')
+    parser.add_argument('--num_archives', type=int, help='Number of archives to download', default=None)
     args = parser.parse_args()
-    download_files(args.output_directory, args.download_pose)
+    download_files(args.output_directory, args.download_pose, args.skip_rgb, args.num_archives)
